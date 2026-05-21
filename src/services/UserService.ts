@@ -21,6 +21,7 @@ export class UserService {
         this.deleteUser = this.deleteUser.bind(this);
         this.updateUser = this.updateUser.bind(this);
         this.getAllUsers = this.getAllUsers.bind(this);
+        this.getUserByEmailWithPassword = this.getUserByEmailWithPassword.bind(this);
     }
 
     async getUserByNick(nick: string): Promise<UserDTO | null> {
@@ -194,6 +195,24 @@ export class UserService {
         }
     }
 
+    async getUserByEmailWithPassword(email: string): Promise<any | null> {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                nick: true,
+                email: true,
+                password: true,
+                role: true,
+            }
+        });
+        return user;
+    } catch (error) {
+        console.error("Error fetching user by email with password:", error);
+        throw new Error("Failed to fetch user by email");
+    }
+}
 
 
 }
