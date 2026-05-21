@@ -1,5 +1,35 @@
 import { prisma } from "../config/prisma";
-import { CreateBookDTO, BookDTO, UpdateBookDTO,BookPagedDTO } from "../types/BookTypes";
+import { CreateBookDTO, BookDTO, UpdateBookDTO, BookPagedDTO } from "../types/BookTypes";
+
+const BOOKS_SELECT = {
+    id: true,
+    title: true,
+    description: true,
+    isbn: true,
+    user: {
+        select: {
+            id: true,
+            nick: true
+        },
+    },
+    author: {
+        select: {
+            name: true
+        }
+    },
+    category: {
+        select: {
+            name: true
+        }
+    },
+    editorial: {
+        select: {
+            name: true
+        }
+    },
+    createdAt: true,
+    updatedAt: true
+}
 
 export class BookService {
 
@@ -22,19 +52,8 @@ export class BookService {
                 prisma.book.findMany({
                     skip,
                     take: safePageSize,
-                    select: {
-                        id: true,
-                        title: true,
-                        description: true,
-                        isbn: true,
-                        user: { select: { id: true } },
-                        author: { select: { name: true } },
-                        category: { select: { name: true } },
-                        editorial: { select: { name: true } },
-                        createdAt: true,
-                        updatedAt: true,
-                    },
-                    orderBy: {createdAt: 'desc'}
+                    select: BOOKS_SELECT,
+                    orderBy: { createdAt: 'desc' }
                 }),
                 prisma.book.count()
             ])
@@ -61,35 +80,8 @@ export class BookService {
                 where: {
                     id
                 },
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    isbn: true,
-                    user: {
-                        select: {
-                            id: true
-                        }
-                    },
-                    author: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    category: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    editorial: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    createdAt: true,
-                    updatedAt: true
-
-                }
+                select: BOOKS_SELECT
+                
             })
 
             if (!book) {
@@ -110,35 +102,8 @@ export class BookService {
 
             const newBook = await prisma.book.create({
                 data: bookData,
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    isbn: true,
-                    user: {
-                        select: {
-                            id: true
-                        }
-                    },
-                    author: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    category: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    editorial: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    createdAt: true,
-                    updatedAt: true
-                }
-            });
+                select: BOOKS_SELECT
+            })
 
             if (!newBook) {
                 return [];
@@ -175,34 +140,7 @@ export class BookService {
                     id
                 },
                 data: bookData,
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    isbn: true,
-                    user: {
-                        select: {
-                            id: true
-                        }
-                    },
-                    author: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    category: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    editorial: {
-                        select: {
-                            name: true
-                        }
-                    },
-                    createdAt: true,
-                    updatedAt: true
-                }
+                select: BOOKS_SELECT
             })
 
             if (!updatedBook) {
