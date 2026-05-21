@@ -1,0 +1,39 @@
+import bcript from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import {config} from '../config/env';
+
+export class AuthUtils {
+
+    constructor() {
+        this.hashPassword = this.hashPassword.bind(this);
+        this.comparePassword = this.comparePassword.bind(this);
+        this.generateToken = this.generateToken.bind(this);
+        this.verifyToken = this.verifyToken.bind(this);
+        this.generateRefreshToken = this.generateRefreshToken.bind(this);
+        //this.verifyRefreshToken = this.verifyRefreshToken.bind(this);
+    }
+
+    async hashPassword(password: string): Promise<string> {
+        const saltRounds = 10;
+        return await bcript.hash(password, saltRounds);
+    }
+
+    async comparePassword(password: string, hash: string): Promise<boolean> {
+        return await bcript.compare(password, hash);
+    }
+
+    async generateToken(payload: object): Promise<string> {
+        const secretKey = config.JWT_SECRET;
+        return jwt.sign(payload, secretKey, { expiresIn: '3h' });
+    }
+
+    async generateRefreshToken(payload: object): Promise<string> {
+        const secretKey = config.REFRESH_TOKEN_SECRET;
+        return jwt.sign(payload, secretKey, { expiresIn: '7d' });
+    }
+
+    async verifyToken(token: string): Promise<any> {
+        const secretKey = config.JWT_SECRET;
+        return jwt.verify(token, secretKey);
+    }
+}

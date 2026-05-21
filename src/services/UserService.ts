@@ -1,12 +1,23 @@
 import { prisma } from "../config/prisma";
-import { CreateUserDTO, CreateUserDTOResponse, UserDTO,UpdateUserDTO } from "../types/UserTypes";
-export class UserService {
+import { CreateUserDTO, CreateUserDTOResponse, UserDTO, UpdateUserDTO } from "../types/UserTypes";
+import { AuthUtils } from "../utils/AuthUtils";
 
-    constructor() {
+const USER_SELECT = {
+    id: true,
+    nick: true,
+    email: true,
+    role: true,
+};
+
+export class UserService {
+    
+    constructor(
+        private authUtils: AuthUtils = new AuthUtils()
+    ) {
         this.getUserByNick = this.getUserByNick.bind(this);
         this.getUserByEmail = this.getUserByEmail.bind(this);
         this.getUserById = this.getUserById.bind(this);
-        //this.createUser = this.createUser.bind(this);
+        this.createUser = this.createUser.bind(this);
         this.deleteUser = this.deleteUser.bind(this);
         this.updateUser = this.updateUser.bind(this);
         this.getAllUsers = this.getAllUsers.bind(this);
@@ -17,11 +28,7 @@ export class UserService {
 
             const user = await prisma.user.findUnique({
                 where: { nick },
-                select: {
-                    id: true,
-                    nick: true,
-                    email: true,
-                }
+                select: USER_SELECT
             });
 
             if (!user) {
@@ -41,11 +48,7 @@ export class UserService {
 
             const user = await prisma.user.findUnique({
                 where: { email },
-                select: {
-                    id: true,
-                    nick: true,
-                    email: true,
-                }
+                select: USER_SELECT
             });
 
             if (!user) {
@@ -65,11 +68,7 @@ export class UserService {
 
             const user = await prisma.user.findUnique({
                 where: { id },
-                select: {
-                    id: true,
-                    nick: true,
-                    email: true,
-                }
+                select: USER_SELECT
             });
 
             if (!user) {
@@ -84,7 +83,60 @@ export class UserService {
         }
     }
 
-    //async createUser(data: CreateUserDTO): Promise<CreateUserDTOResponse> {}
+    async createUser(data: CreateUserDTO): Promise<CreateUserDTOResponse> {
+        try {
+            
+            const existUser = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { email: data.email },
+                        { nick: data.nick }
+                    ]
+                }
+            })
+
+            if (existUser) {
+                throw new Error("User already exists");
+            }
+
+            const hashedPassword = await this.authUtils.hashPassword(data.password);
+
+            const user = await prisma.user.create({
+                data: {
+                    nick: data.nick,
+                    email: data.email,
+                    password: hashedPassword,
+                },
+                select: USER_SELECT
+            })
+
+            const token = await this.authUtils.generateToken({ id: user.id, email: user.email, role: user.role });
+
+            return {
+                user,
+                token,
+            }
+
+        } catch (error) {
+            console.error("Error creating user:", error);
+            throw new Error("Failed to create user");
+        }
+    }
+
+    async createRefreshToken(userId: string, refreshToken: string): Promise<void> {
+        try {
+            await prisma.refreshToken.create({
+                data: {
+                    userId,
+                    refreshToken,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                }
+            });
+        } catch (error) {
+            console.error("Error creating refresh token:", error);
+            throw new Error("Failed to create refresh token");
+        }
+    }
 
     async deleteUser(id: string) {
         try {
@@ -112,35 +164,36 @@ export class UserService {
                 message: "User updated successfully"
             }
 
-            }catch (error) {
-                console.error("Error updating user:", error);
-                throw new Error("Failed to update user");
-            }
+        } catch (error) {
+            console.error("Error updating user:", error);
+            throw new Error("Failed to update user");
         }
+    }
 
-    async getAllUsers(): Promise < UserDTO[] | [] > {
-            try {
-                const users = await prisma.user.findMany({
-                    select: {
-                        id: true,
-                        nick: true,
-                        email: true,
-                        createdAt: true,
-                        updatedAt: true,
-                    }
-                });
-
-                if(!users) {
-                    return [];
+    async getAllUsers(): Promise<UserDTO[] | []> {
+        try {
+            const users = await prisma.user.findMany({
+                select: {
+                    id: true,
+                    nick: true,
+                    email: true,
+                    role: true,
+                    createdAt: true,
+                    updatedAt: true,
                 }
+            });
+
+            if (!users) {
+                return [];
+            }
 
             return users;
-            } catch(error) {
-                console.error("Error fetching all users:", error);
-                throw new Error("Failed to fetch all users");
-            }
+        } catch (error) {
+            console.error("Error fetching all users:", error);
+            throw new Error("Failed to fetch all users");
         }
-
-
-
     }
+
+
+
+}

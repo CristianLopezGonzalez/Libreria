@@ -1,31 +1,44 @@
 import { BookDTO } from "./BookTypes";
+import { Role } from "../generated/prisma/enums";
 
 export interface UserDTO {
-    id:string;
-    nick:string;
-    email:string;
-    
-    books?:BookDTO[]
+    id: string;
+    nick: string;
+    email: string;
+    role: Role;
 
-    createdAt?:Date;
-    updatedAt?:Date;
+    books?: BookDTO[]
 
-
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface CreateUserDTO {
-    id:string;
-    nick:string;
-    email:string;
-    password:string;
+    nick: string;
+    email: string;
+    password: string;
 }
 
 export interface UpdateUserDTO {
-    nick?:string;
-    email?:string;
+    nick?: string;
+    email?: string;
 }
 
 export interface CreateUserDTOResponse {
     user: UserDTO;
     token: string;
+}
+
+export interface AuthenticatedUser {
+    id: string;
+    nick: string;
+    role: Role;
+}
+
+declare global {
+    namespace Express {
+        export interface Request {
+            user?: AuthenticatedUser;
+        }
+    }
 }
