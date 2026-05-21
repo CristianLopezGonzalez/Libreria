@@ -4,7 +4,7 @@ import { AuthUtils } from '../utils/AuthUtils';
 import { ResponseHttp } from '../middlewares/ResponseHttp';
 import { prisma } from '../config/prisma';
 
-export class UserController {
+export class AuthController {
     constructor(
         private userService: UserService = new UserService(),
         private authUtils: AuthUtils = new AuthUtils(),
