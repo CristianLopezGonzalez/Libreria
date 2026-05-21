@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id       String @id @default(uuid())
+  nick     String @unique
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  books Book[]
+}
+
+model Book {
+  id          String @id @default(uuid())
+  title       String
+  description String @default("")
+  isbn        String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  editorialId String
+  editorial   Editorial @relation(fields: [editorialId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([editorialId])
+}
+
+model Author {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
+}
+
+model Editorial {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
+}
