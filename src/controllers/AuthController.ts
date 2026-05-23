@@ -12,6 +12,7 @@ export class AuthController {
     ) {
         this.register = this.register.bind(this);
         this.login = this.login.bind(this);
+        this.refreshToken = this.refreshToken.bind(this);
     }
 
     async register(req: Request, res: Response): Promise<Response> {
@@ -34,11 +35,9 @@ export class AuthController {
                 return this.responseHttp.BAD_REQUEST(res, 'Email already in use');
             }
 
-            const hashedPassword = await this.authUtils.hashPassword(password);
-
             const newUser = await this.userService.createUser({
                 email,
-                password: hashedPassword,
+                password,
                 nick
             });
             const payload = {
@@ -123,6 +122,62 @@ export class AuthController {
         }catch (error) {    
             console.error('Error in login:', error);
             return this.responseHttp.INTERNAL_SERVER_ERROR(res, 'Error logging in');
+        }
+    }
+
+    async refreshToken(req: Request, res: Response): Promise<Response> {
+        try {
+            const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+            if (!refreshToken || typeof refreshToken !== 'string') {
+                return this.responseHttp.UNAUTHORIZED(res, 'Refresh token missing');
+            }
+
+            let decoded: any;
+            try {
+                decoded = await this.authUtils.verifyRefreshToken(refreshToken);
+            } catch (tokenError: any) {
+                if (tokenError.name === 'TokenExpiredError') {
+                    await this.userService.deleteRefreshToken(refreshToken);
+                    return this.responseHttp.UNAUTHORIZED(res, 'Refresh token has expired');
+                }
+                if (tokenError.name === 'JsonWebTokenError') {
+                    return this.responseHttp.UNAUTHORIZED(res, 'Invalid refresh token');
+                }
+                throw tokenError;
+            }
+
+            const storedToken = await this.userService.getRefreshToken(refreshToken);
+            if (!storedToken) {
+                return this.responseHttp.UNAUTHORIZED(res, 'Refresh token not found');
+            }
+
+            if (storedToken.expiresAt < new Date()) {
+                await this.userService.deleteRefreshToken(refreshToken);
+                return this.responseHttp.UNAUTHORIZED(res, 'Refresh token has expired');
+            }
+
+            if (decoded?.id && decoded.id !== storedToken.userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'Refresh token user mismatch');
+            }
+
+            const user = await this.userService.getUserById(storedToken.userId);
+            if (!user) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not found');
+            }
+
+            const payload = {
+                id: user.id,
+                nick: user.nick,
+                role: user.role
+            };
+
+            const token = await this.authUtils.generateToken(payload);
+
+            return this.responseHttp.OK(res, { token });
+        } catch (error: any) {
+            console.error("Refresh token error:", error);
+            return this.responseHttp.INTERNAL_SERVER_ERROR(res, error.message);
         }
     }
 

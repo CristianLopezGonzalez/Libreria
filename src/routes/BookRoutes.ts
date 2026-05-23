@@ -9,8 +9,8 @@ const authM = new AuthMiddleware();
 
 router.get('/', bookC.getAllBooks);
 router.get('/:id', bookC.getBookById);
-router.post('/', authM.permitRoles([Role.ADMIN]), bookC.createBook);
-router.put('/:id', authM.permitRoles([Role.ADMIN]), bookC.updateBook);
-router.delete('/:id', authM.permitRoles([Role.ADMIN]), bookC.deleteBook);
+router.post('/', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.createBook);
+router.put('/:id', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.updateBook);
+router.delete('/:id', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.deleteBook);
 
 export default router;

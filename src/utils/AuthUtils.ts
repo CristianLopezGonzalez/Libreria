@@ -10,7 +10,7 @@ export class AuthUtils {
         this.generateToken = this.generateToken.bind(this);
         this.verifyToken = this.verifyToken.bind(this);
         this.generateRefreshToken = this.generateRefreshToken.bind(this);
-        //this.verifyRefreshToken = this.verifyRefreshToken.bind(this);
+        this.verifyRefreshToken = this.verifyRefreshToken.bind(this);
     }
 
     async hashPassword(password: string): Promise<string> {
@@ -34,6 +34,11 @@ export class AuthUtils {
 
     async verifyToken(token: string): Promise<any> {
         const secretKey = config.JWT_SECRET;
+        return jwt.verify(token, secretKey);
+    }
+
+    async verifyRefreshToken(token: string): Promise<any> {
+        const secretKey = config.REFRESH_TOKEN_SECRET;
         return jwt.verify(token, secretKey);
     }
 }

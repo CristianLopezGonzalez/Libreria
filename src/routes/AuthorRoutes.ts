@@ -9,6 +9,6 @@ const authM = new AuthMiddleware();
 
 router.get('/', authorC.getAllAuthors);
 router.get('/:id', authorC.getAuthorById);
-router.post('/', authM.permitRoles([Role.ADMIN]), authorC.createAuthor);
+router.post('/', authM.authenticate, authM.permitRoles([Role.ADMIN]), authorC.createAuthor);
 
 export default router;

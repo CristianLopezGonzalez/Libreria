@@ -9,7 +9,8 @@ const authM = new AuthMiddleware();
 
 router.post('/login', authC.login);
 router.post('/register', authC.register);
-router.post('/logout', authC.logout);
-router.get('/profile', authM.permitRoles([Role.USER, Role.ADMIN]), authC.getProfile);
+router.post('/logout', authM.authenticate, authC.logout);
+router.post('/refresh', authC.refreshToken);
+router.get('/profile', authM.authenticate, authM.permitRoles([Role.USER, Role.ADMIN]), authC.getProfile);
 
 export default router;

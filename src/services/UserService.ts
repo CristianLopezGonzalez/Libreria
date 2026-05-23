@@ -22,6 +22,8 @@ export class UserService {
         this.updateUser = this.updateUser.bind(this);
         this.getAllUsers = this.getAllUsers.bind(this);
         this.getUserByEmailWithPassword = this.getUserByEmailWithPassword.bind(this);
+        this.getRefreshToken = this.getRefreshToken.bind(this);
+        this.deleteRefreshToken = this.deleteRefreshToken.bind(this);
     }
 
     async getUserByNick(nick: string): Promise<UserDTO | null> {
@@ -160,6 +162,35 @@ export class UserService {
         } catch (error) {
             console.error("Error creating refresh token:", error);
             throw new Error("Failed to create refresh token");
+        }
+    }
+
+    async getRefreshToken(refreshToken: string): Promise<{ userId: string; expiresAt: Date; refreshToken: string } | null> {
+        try {
+            const token = await prisma.refreshToken.findUnique({
+                where: { refreshToken },
+                select: {
+                    userId: true,
+                    expiresAt: true,
+                    refreshToken: true,
+                }
+            });
+
+            return token || null;
+        } catch (error) {
+            console.error("Error fetching refresh token:", error);
+            throw new Error("Failed to fetch refresh token");
+        }
+    }
+
+    async deleteRefreshToken(refreshToken: string): Promise<void> {
+        try {
+            await prisma.refreshToken.deleteMany({
+                where: { refreshToken }
+            });
+        } catch (error) {
+            console.error("Error deleting refresh token:", error);
+            throw new Error("Failed to delete refresh token");
         }
     }
 
