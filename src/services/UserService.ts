@@ -10,7 +10,7 @@ const USER_SELECT = {
 };
 
 export class UserService {
-    
+
     constructor(
         private authUtils: AuthUtils = new AuthUtils()
     ) {
@@ -84,9 +84,33 @@ export class UserService {
         }
     }
 
+    async getAllUsers(): Promise<UserDTO[] | []> {
+        try {
+            const users = await prisma.user.findMany({
+                select: {
+                    id: true,
+                    nick: true,
+                    email: true,
+                    role: true,
+                    createdAt: true,
+                    updatedAt: true,
+                }
+            });
+
+            if (!users) {
+                return [];
+            }
+
+            return users;
+        } catch (error) {
+            console.error("Error fetching all users:", error);
+            throw new Error("Failed to fetch all users");
+        }
+    }
+
     async createUser(data: CreateUserDTO): Promise<CreateUserDTOResponse> {
         try {
-            
+
             const existUser = await prisma.user.findFirst({
                 where: {
                     OR: [
@@ -171,48 +195,24 @@ export class UserService {
         }
     }
 
-    async getAllUsers(): Promise<UserDTO[] | []> {
+    async getUserByEmailWithPassword(email: string): Promise<any | null> {
         try {
-            const users = await prisma.user.findMany({
+            const user = await prisma.user.findUnique({
+                where: { email },
                 select: {
                     id: true,
                     nick: true,
                     email: true,
+                    password: true,
                     role: true,
-                    createdAt: true,
-                    updatedAt: true,
                 }
             });
-
-            if (!users) {
-                return [];
-            }
-
-            return users;
+            return user;
         } catch (error) {
-            console.error("Error fetching all users:", error);
-            throw new Error("Failed to fetch all users");
+            console.error("Error fetching user by email with password:", error);
+            throw new Error("Failed to fetch user by email");
         }
     }
-
-    async getUserByEmailWithPassword(email: string): Promise<any | null> {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { email },
-            select: {
-                id: true,
-                nick: true,
-                email: true,
-                password: true,
-                role: true,
-            }
-        });
-        return user;
-    } catch (error) {
-        console.error("Error fetching user by email with password:", error);
-        throw new Error("Failed to fetch user by email");
-    }
-}
 
 
 }

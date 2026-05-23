@@ -13,7 +13,7 @@ export class ResponseHttp {
         this.INTERNAL_SERVER_ERROR = this.INTERNAL_SERVER_ERROR.bind(this);
     }
 
-    OK(res: Response, data?: any, message?:string) {
+    OK(res: Response, data?: any, message?: string) {
         return res.status(StatusCodes.OK).json({
             status: StatusCodes.OK,
             message: message || 'Success',
@@ -21,7 +21,7 @@ export class ResponseHttp {
         })
     }
 
-    CREATED(res: Response, data?: any, message?:string) {
+    CREATED(res: Response, data?: any, message?: string) {
         return res.status(StatusCodes.CREATED).json({
             status: StatusCodes.CREATED,
             message: message || 'Resource created successfully',
@@ -29,35 +29,35 @@ export class ResponseHttp {
         })
     }
 
-    BAD_REQUEST(res: Response, message?:string) {
+    BAD_REQUEST(res: Response, message?: string) {
         return res.status(StatusCodes.BAD_REQUEST).json({
             status: StatusCodes.BAD_REQUEST,
             message: message || 'Bad Request'
         })
     }
 
-    UNAUTHORIZED(res: Response, message?:string) {
+    UNAUTHORIZED(res: Response, message?: string) {
         return res.status(StatusCodes.UNAUTHORIZED).json({
             status: StatusCodes.UNAUTHORIZED,
             message: message || 'Unauthorized'
         })
     }
 
-    FORBIDDEN(res: Response, message?:string) {
+    FORBIDDEN(res: Response, message?: string) {
         return res.status(StatusCodes.FORBIDDEN).json({
             status: StatusCodes.FORBIDDEN,
             message: message || 'Forbidden'
         })
     }
 
-    NOT_FOUND(res: Response, message?:string) {
+    NOT_FOUND(res: Response, message?: string) {
         return res.status(StatusCodes.NOT_FOUND).json({
             status: StatusCodes.NOT_FOUND,
             message: message || 'Resource not found'
         })
     }
 
-    INTERNAL_SERVER_ERROR(res: Response, message?:string) {
+    INTERNAL_SERVER_ERROR(res: Response, message?: string) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             status: StatusCodes.INTERNAL_SERVER_ERROR,
             message: message || 'Internal Server Error'
