@@ -41,7 +41,7 @@ export class BookService {
         this.getAllBooks = this.getAllBooks.bind(this);
     }
 
-    async getAllBooks(page = 1, pageSize = 10): Promise<BookPagedDTO> {
+    async getAllBooks(userId: string, page = 1, pageSize = 10): Promise<BookPagedDTO> {
         try {
             const safePage = Math.max(1, page);
             const safePageSize = Math.min(50, Math.max(1, pageSize));
@@ -50,12 +50,13 @@ export class BookService {
             const [data, total] = await prisma.$transaction([
 
                 prisma.book.findMany({
+                    where: { userId },
                     skip,
                     take: safePageSize,
                     select: BOOKS_SELECT,
                     orderBy: { createdAt: 'desc' }
                 }),
-                prisma.book.count()
+                prisma.book.count({ where: { userId } })
             ])
 
             return {
@@ -72,13 +73,14 @@ export class BookService {
         }
     }
 
-    async getBookById(id: string): Promise<BookDTO | null> {
+    async getBookById(id: string, userId: string): Promise<BookDTO | null> {
 
         try {
 
-            const book = await prisma.book.findUnique({
+            const book = await prisma.book.findFirst({
                 where: {
-                    id
+                    id,
+                    userId
                 },
                 select: BOOKS_SELECT
                 
@@ -117,8 +119,20 @@ export class BookService {
         }
     }
 
-    async deleteBook(id: string): Promise<void> {
+    async deleteBook(id: string, userId: string): Promise<boolean> {
         try {
+
+            const existing = await prisma.book.findFirst({
+                where: {
+                    id,
+                    userId
+                },
+                select: { id: true }
+            });
+
+            if (!existing) {
+                return false;
+            }
 
             await prisma.book.delete({
                 where: {
@@ -126,14 +140,28 @@ export class BookService {
                 }
             });
 
+            return true;
+
         } catch (error) {
             console.error("Error deleting book:", error);
             throw new Error("Failed to delete book");
         }
     }
 
-    async updateBook(id: string, bookData: UpdateBookDTO): Promise<BookDTO | null> {
+    async updateBook(id: string, userId: string, bookData: UpdateBookDTO): Promise<BookDTO | null> {
         try {
+
+            const existing = await prisma.book.findFirst({
+                where: {
+                    id,
+                    userId
+                },
+                select: { id: true }
+            });
+
+            if (!existing) {
+                return null;
+            }
 
             const updatedBook = await prisma.book.update({
                 where: {

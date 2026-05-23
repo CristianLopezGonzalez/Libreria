@@ -1,16 +1,15 @@
 import {BookController} from '../controllers/BookController';
 import { Router } from 'express';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
-import { Role } from '../generated/prisma/enums';
 
 const router = Router();
 const bookC = new BookController();
 const authM = new AuthMiddleware();
 
-router.get('/', bookC.getAllBooks);
-router.get('/:id', bookC.getBookById);
-router.post('/', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.createBook);
-router.put('/:id', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.updateBook);
-router.delete('/:id', authM.authenticate, authM.permitRoles([Role.ADMIN]), bookC.deleteBook);
+router.get('/', authM.authenticate, bookC.getAllBooks);
+router.get('/:id', authM.authenticate, bookC.getBookById);
+router.post('/', authM.authenticate, bookC.createBook);
+router.put('/:id', authM.authenticate, bookC.updateBook);
+router.delete('/:id', authM.authenticate, bookC.deleteBook);
 
 export default router;

@@ -19,15 +19,17 @@ export interface BookDTO {
     updatedAt: Date;
 }
 
-export interface CreateBookDTO {
+export interface CreateBookRequestDTO {
     title: string;
     description: string;
-    isbn :string;
-    userId: string;
+    isbn: string;
     authorId: string;
     categoryId: string;
-    editorialId:string;
-    
+    editorialId: string;
+}
+
+export interface CreateBookDTO extends CreateBookRequestDTO {
+    userId: string;
 }
 
 export interface UpdateBookDTO{

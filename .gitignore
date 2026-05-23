@@ -4,3 +4,4 @@
 dev.db
 /src/generated/prisma
 /prisma/migrations
+/docs

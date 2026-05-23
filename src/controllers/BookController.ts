@@ -1,6 +1,6 @@
 import { BookService } from '../services/BookService';
 import { Request, Response } from 'express';
-import { CreateBookDTO, UpdateBookDTO } from '../types/BookTypes';
+import { CreateBookDTO, CreateBookRequestDTO, UpdateBookDTO } from '../types/BookTypes';
 import { ResponseHttp } from '../middlewares/ResponseHttp';
 
 export class BookController {
@@ -17,10 +17,15 @@ export class BookController {
 
     }
 
-    async createBook(req: Request<{}, {}, CreateBookDTO>, res: Response) {
+    async createBook(req: Request<{}, {}, CreateBookRequestDTO>, res: Response) {
         try {
 
-            const bookData: CreateBookDTO = req.body;
+            const userId = req.user?.id;
+            if (!userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
+            }
+
+            const bookData: CreateBookDTO = { ...req.body, userId };
             const newBook = await this.bookService.createBook(bookData);
             return this.responseHttp.CREATED(res, newBook, 'Book created successfully');
 
@@ -34,7 +39,15 @@ export class BookController {
         try {
 
             const { id } = req.params;
-            const book = await this.bookService.getBookById(id);
+            const userId = req.user?.id;
+            if (!userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
+            }
+
+            const book = await this.bookService.getBookById(id, userId);
+            if (!book) {
+                return this.responseHttp.OK(res)
+            }
             return this.responseHttp.OK(res, book, 'Book fetched successfully');
 
         } catch (error) {
@@ -48,8 +61,16 @@ export class BookController {
         try {
 
             const { id } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
+            }
+
             const bookData: UpdateBookDTO = req.body;
-            const updatedBook = await this.bookService.updateBook(id, bookData);
+            const updatedBook = await this.bookService.updateBook(id, userId, bookData);
+            if (!updatedBook) {
+                return this.responseHttp.NOT_FOUND(res, 'Book not found');
+            }
             return this.responseHttp.OK(res, updatedBook, 'Book updated successfully');
 
         } catch (error) {
@@ -63,7 +84,15 @@ export class BookController {
         try {
 
             const { id } = req.params;
-            await this.bookService.deleteBook(id);
+            const userId = req.user?.id;
+            if (!userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
+            }
+
+            const deleted = await this.bookService.deleteBook(id, userId);
+            if (!deleted) {
+                return this.responseHttp.NOT_FOUND(res, 'Book not found');
+            }
             return this.responseHttp.OK(res, null, 'Book deleted successfully');
 
         } catch (error) {
@@ -77,6 +106,11 @@ export class BookController {
         try {
             const page = parseInt(req.query.page || '1');
             const pageSize = parseInt(req.query.pageSize || '10');
+
+            const userId = req.user?.id;
+            if (!userId) {
+                return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
+            }
  
             if (isNaN(page) || page < 1) {
                 return this.responseHttp.BAD_REQUEST(res, 'Page must be a positive integer');
@@ -86,7 +120,7 @@ export class BookController {
                 return this.responseHttp.BAD_REQUEST(res, 'Page size must be a positive integer between 1 and 100');
             }
  
-            const books = await this.bookService.getAllBooks(page, pageSize);
+            const books = await this.bookService.getAllBooks(userId, page, pageSize);
             return this.responseHttp.OK(res, books, 'Books fetched successfully');
  
         } catch (error) {
