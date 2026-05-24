@@ -15,8 +15,6 @@ export class AuthController {
         this.refreshToken = this.refreshToken.bind(this);
         this.logout = this.logout.bind(this);
         this.getProfile = this.getProfile.bind(this);
-        this.verifyEmail = this.verifyEmail.bind(this);
-        this.resendVerificationEmail = this.resendVerificationEmail.bind(this);
     }
 
     async register(req: Request, res: Response): Promise<Response> {
@@ -112,7 +110,6 @@ export class AuthController {
                     email: user.email,
                     nick: user.nick,
                     role: user.role,
-                    emailVerified: user.emailVerified
                 },
                 token
             });
@@ -123,57 +120,6 @@ export class AuthController {
         }
     }
 
-    async verifyEmail(req: Request, res: Response): Promise<Response> {
-        try {
-            const { email, token } = req.body;
-
-            const result = await this.userService.verifyEmail(email, token);
-
-            return this.responseHttp.OK(res, {
-                message: result.message,
-                emailVerified: true
-            });
-
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Verification failed';
-
-            if (message.includes('not found')) {
-                return this.responseHttp.BAD_REQUEST(res, message);
-            }
-            if (message.includes('already verified')) {
-                return this.responseHttp.BAD_REQUEST(res, message);
-            }
-            if (message.includes('Invalid') || message.includes('expired')) {
-                return this.responseHttp.BAD_REQUEST(res, message);
-            }
-
-            return this.responseHttp.INTERNAL_SERVER_ERROR(res, message);
-        }
-    }
-
-    async resendVerificationEmail(req: Request, res: Response): Promise<Response> {
-        try {
-            const { email } = req.body;
-
-            const result = await this.userService.resendVerificationEmail(email);
-
-            return this.responseHttp.OK(res, {
-                message: result.message
-            });
-
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to resend verification email';
-
-            if (message.includes('not found')) {
-                return this.responseHttp.BAD_REQUEST(res, message);
-            }
-            if (message.includes('already verified')) {
-                return this.responseHttp.BAD_REQUEST(res, message);
-            }
-
-            return this.responseHttp.INTERNAL_SERVER_ERROR(res, message);
-        }
-    }
 
     async refreshToken(req: Request, res: Response): Promise<Response> {
         try {

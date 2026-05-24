@@ -28,8 +28,7 @@ export class UserService {
         this.getRefreshToken = this.getRefreshToken.bind(this);
         this.deleteRefreshToken = this.deleteRefreshToken.bind(this);
 
-        this.verifyEmail = this.verifyEmail.bind(this);
-        this.resendVerificationEmail = this.resendVerificationEmail.bind(this);
+    
     }
 
     async getUserByNick(nick: string): Promise<UserDTO | null> {
@@ -100,8 +99,6 @@ export class UserService {
                     nick: true,
                     email: true,
                     role: true,
-                    createdAt: true,
-                    updatedAt: true,
                 }
             });
 
@@ -142,9 +139,6 @@ export class UserService {
                     nick: data.nick,
                     email: data.email,
                     password: hashedPassword,
-                    emailVerified: false,
-                    emailVerificationTokenHash,
-                    emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
                 },
                 select: USER_SELECT
             })
@@ -176,104 +170,6 @@ export class UserService {
         }
     }
 
-    async verifyEmail(email: string, token: string): Promise<{ message: string }> {
-        try {
-            const tokenHash = this.authUtils.hashToken(token);
-
-            const user = await prisma.user.findUnique({
-                where: { email },
-                select: {
-                    id: true,
-                    emailVerificationTokenHash: true,
-                    emailVerifyExpiresAt: true,
-                    emailVerified: true
-                }
-            });
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            if (user.emailVerified) {
-                throw new Error("Email already verified");
-            }
-
-            if (!user.emailVerificationTokenHash) {
-                throw new Error("No verification token found");
-            }
-
-            if (user.emailVerificationTokenHash !== tokenHash) {
-                throw new Error("Invalid verification token");
-            }
-
-            if (user.emailVerifyExpiresAt && new Date() > user.emailVerifyExpiresAt) {
-                throw new Error("Verification token has expired");
-            }
-
-            // Actualizar el usuario
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    emailVerified: true,
-                    emailVerificationTokenHash: null,
-                    emailVerifyExpiresAt: null
-                }
-            });
-
-            return {
-                message: "Email verified successfully"
-            };
-
-        } catch (error) {
-            console.error("Error verifying email:", error);
-            throw new Error(error instanceof Error ? error.message : "Failed to verify email");
-        }
-    }
-
-    async resendVerificationEmail(email: string): Promise<{ message: string }> {
-        try {
-            const user = await prisma.user.findUnique({
-                where: { email },
-                select: {
-                    id: true,
-                    nick: true,
-                    emailVerified: true
-                }
-            });
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            if (user.emailVerified) {
-                throw new Error("Email is already verified");
-            }
-
-            // Generar nuevo token
-            const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-            const emailVerificationTokenHash = this.authUtils.hashToken(emailVerificationToken);
-
-            // Actualizar el token en la BD
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    emailVerificationTokenHash,
-                    emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                }
-            });
-
-            // Enviar email
-            await this.emailService.sendVerificationEmail(email, emailVerificationToken, user.nick);
-
-            return {
-                message: "Verification email sent successfully"
-            };
-
-        } catch (error) {
-            console.error("Error resending verification email:", error);
-            throw new Error(error instanceof Error ? error.message : "Failed to resend verification email");
-        }
-    }
 
     async createRefreshToken(userId: string, refreshToken: string): Promise<void> {
         try {

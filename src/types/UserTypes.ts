@@ -14,7 +14,6 @@ export interface UserDTO {
 }
 
 export interface UserWithPasswordDTO {
-    [x: string]: any;
     id: string;
     nick: string;
     email: string;
@@ -26,12 +25,6 @@ export interface CreateUserDTO {
     nick: string;
     email: string;
     password: string;
-}
-
-export interface EmailVerificationDTO extends CreateUserDTO {
-    emailVerified: boolean;
-    emailVerificationTokenHash: string;
-    emailVerifyExpiresAt: Date;
 }
 
 export interface UpdateUserDTO {

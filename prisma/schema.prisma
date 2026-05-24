@@ -19,10 +19,6 @@ model User {
   password String
   role     Role   @default(USER)
   
-  emailVerified Boolean @default(false)
-  emailVerificationTokenHash String? @unique
-  emailVerifyExpiresAt DateTime?
-
   books  Book[]
   tokens RefreshToken[]
 }
