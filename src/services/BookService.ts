@@ -99,17 +99,13 @@ export class BookService {
 
     }
 
-    async createBook(bookData: CreateBookDTO): Promise<BookDTO | []> {
+    async createBook(bookData: CreateBookDTO): Promise<BookDTO> {
         try {
 
             const newBook = await prisma.book.create({
                 data: bookData,
                 select: BOOKS_SELECT
             })
-
-            if (!newBook) {
-                return [];
-            }
 
             return newBook;
 

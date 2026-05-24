@@ -1,6 +1,8 @@
 import { prisma } from "../config/prisma";
-import { CreateUserDTO, CreateUserDTOResponse, UserDTO, UpdateUserDTO } from "../types/UserTypes";
+import { CreateUserDTO, CreateUserDTOResponse, UserDTO, UpdateUserDTO, UserWithPasswordDTO } from "../types/UserTypes";
 import { AuthUtils } from "../utils/AuthUtils";
+import crypto from 'crypto';
+import { EmailService } from "./EmailService";
 
 const USER_SELECT = {
     id: true,
@@ -12,7 +14,8 @@ const USER_SELECT = {
 export class UserService {
 
     constructor(
-        private authUtils: AuthUtils = new AuthUtils()
+        private authUtils: AuthUtils = new AuthUtils(),
+        private emailService: EmailService = new EmailService()
     ) {
         this.getUserByNick = this.getUserByNick.bind(this);
         this.getUserByEmail = this.getUserByEmail.bind(this);
@@ -24,6 +27,9 @@ export class UserService {
         this.getUserByEmailWithPassword = this.getUserByEmailWithPassword.bind(this);
         this.getRefreshToken = this.getRefreshToken.bind(this);
         this.deleteRefreshToken = this.deleteRefreshToken.bind(this);
+
+        this.verifyEmail = this.verifyEmail.bind(this);
+        this.resendVerificationEmail = this.resendVerificationEmail.bind(this);
     }
 
     async getUserByNick(nick: string): Promise<UserDTO | null> {
@@ -127,26 +133,145 @@ export class UserService {
             }
 
             const hashedPassword = await this.authUtils.hashPassword(data.password);
+            const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+            const emailVerificationTokenHash = this.authUtils.hashToken(emailVerificationToken);
+
 
             const user = await prisma.user.create({
                 data: {
                     nick: data.nick,
                     email: data.email,
                     password: hashedPassword,
+                    emailVerified: false,
+                    emailVerificationTokenHash,
+                    emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
                 },
                 select: USER_SELECT
             })
 
-            const token = await this.authUtils.generateToken({ id: user.id, nick: user.nick, role: user.role });
+            const payload={
+                id: user.id,
+                nick: user.nick,
+                role: user.role
+            }
+
+            const token = await this.authUtils.generateToken(payload);
+
+            try {
+                await this.emailService.sendVerificationEmail(user.email, emailVerificationToken, user.nick);
+            } catch (emailError) {
+                console.error("Error sending verification email:", emailError);
+
+            }
 
             return {
                 user,
                 token,
+                emailVerificationToken,
             }
 
         } catch (error) {
             console.error("Error creating user:", error);
             throw new Error("Failed to create user");
+        }
+    }
+
+    async verifyEmail(email: string, token: string): Promise<{ message: string }> {
+        try {
+            const tokenHash = this.authUtils.hashToken(token);
+ 
+            const user = await prisma.user.findUnique({
+                where: { email },
+                select: {
+                    id: true,
+                    emailVerificationTokenHash: true,
+                    emailVerifyExpiresAt: true,
+                    emailVerified: true
+                }
+            });
+ 
+            if (!user) {
+                throw new Error("User not found");
+            }
+ 
+            if (user.emailVerified) {
+                throw new Error("Email already verified");
+            }
+ 
+            if (!user.emailVerificationTokenHash) {
+                throw new Error("No verification token found");
+            }
+ 
+            if (user.emailVerificationTokenHash !== tokenHash) {
+                throw new Error("Invalid verification token");
+            }
+ 
+            if (user.emailVerifyExpiresAt && new Date() > user.emailVerifyExpiresAt) {
+                throw new Error("Verification token has expired");
+            }
+ 
+            // Actualizar el usuario
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    emailVerified: true,
+                    emailVerificationTokenHash: null,
+                    emailVerifyExpiresAt: null
+                }
+            });
+ 
+            return {
+                message: "Email verified successfully"
+            };
+ 
+        } catch (error) {
+            console.error("Error verifying email:", error);
+            throw new Error(error instanceof Error ? error.message : "Failed to verify email");
+        }
+    }
+
+    async resendVerificationEmail(email: string): Promise<{ message: string }> {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { email },
+                select: {
+                    id: true,
+                    nick: true,
+                    emailVerified: true
+                }
+            });
+ 
+            if (!user) {
+                throw new Error("User not found");
+            }
+ 
+            if (user.emailVerified) {
+                throw new Error("Email is already verified");
+            }
+ 
+            // Generar nuevo token
+            const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+            const emailVerificationTokenHash = this.authUtils.hashToken(emailVerificationToken);
+ 
+            // Actualizar el token en la BD
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    emailVerificationTokenHash,
+                    emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+                }
+            });
+ 
+            // Enviar email
+            await this.emailService.sendVerificationEmail(email, emailVerificationToken, user.nick);
+ 
+            return {
+                message: "Verification email sent successfully"
+            };
+ 
+        } catch (error) {
+            console.error("Error resending verification email:", error);
+            throw new Error(error instanceof Error ? error.message : "Failed to resend verification email");
         }
     }
 
@@ -229,7 +354,7 @@ export class UserService {
         }
     }
 
-    async getUserByEmailWithPassword(email: string): Promise<any | null> {
+    async getUserByEmailWithPassword(email: string): Promise<UserWithPasswordDTO | null> {
         try {
             const user = await prisma.user.findUnique({
                 where: { email },
@@ -247,6 +372,8 @@ export class UserService {
             throw new Error("Failed to fetch user by email");
         }
     }
+
+    
 
 
 }

@@ -13,10 +13,25 @@ export interface UserDTO {
     updatedAt?: Date;
 }
 
+export interface UserWithPasswordDTO {
+    [x: string]: any;
+    id: string;
+    nick: string;
+    email: string;
+    password: string;
+    role: Role;
+}
+
 export interface CreateUserDTO {
     nick: string;
     email: string;
     password: string;
+}
+
+export interface EmailVerificationDTO extends CreateUserDTO {
+    emailVerified: boolean;
+    emailVerificationTokenHash: string;
+    emailVerifyExpiresAt: Date;
 }
 
 export interface UpdateUserDTO {
@@ -27,6 +42,7 @@ export interface UpdateUserDTO {
 export interface CreateUserDTOResponse {
     user: UserDTO;
     token: string;
+    emailVerificationToken?: string;
 }
 
 export interface AuthenticatedUser {

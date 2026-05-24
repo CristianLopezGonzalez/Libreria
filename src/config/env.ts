@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.DATABASE_URL || !process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET || !process.env.RESEND_API_KEY || !process.env.RESEND_DOMAIN) {
+if (!process.env.PORT || !process.env.DATABASE_URL || !process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET || !process.env.RESEND_API_KEY || !process.env.RESEND_DOMAIN || !process.env.FRONTEND_URL) {
     throw new Error('Missing required environment variables');
 }
 
@@ -12,5 +12,6 @@ export const config = {
     JWT_SECRET: process.env.JWT_SECRET,
     REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
-    RESEND_DOMAIN: process.env.RESEND_DOMAIN
+    RESEND_DOMAIN: process.env.RESEND_DOMAIN,
+    FRONTEND_URL: process.env.FRONTEND_URL
 }

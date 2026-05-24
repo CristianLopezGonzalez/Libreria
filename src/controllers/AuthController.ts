@@ -13,16 +13,15 @@ export class AuthController {
         this.register = this.register.bind(this);
         this.login = this.login.bind(this);
         this.refreshToken = this.refreshToken.bind(this);
+        this.logout = this.logout.bind(this);
+        this.getProfile = this.getProfile.bind(this);
+        this.verifyEmail = this.verifyEmail.bind(this);
+        this.resendVerificationEmail = this.resendVerificationEmail.bind(this);
     }
 
     async register(req: Request, res: Response): Promise<Response> {
         try {
-
             const { email, password, nick } = req.body;
-
-            if (!email || !password || !nick) {
-                return this.responseHttp.BAD_REQUEST(res, 'Email, password and nick are required');
-            }
 
             const existingUser = await this.userService.getUserByEmail(email);
             const existingNick = await this.userService.getUserByNick(nick);
@@ -40,11 +39,13 @@ export class AuthController {
                 password,
                 nick
             });
+
             const payload = {
-                id:newUser.user.id,
+                id: newUser.user.id,
                 nick: newUser.user.nick,
                 role: newUser.user.role
             }
+
             const refreshToken = await this.authUtils.generateRefreshToken(payload);
             await this.userService.createRefreshToken(newUser.user.id, refreshToken);
 
@@ -55,17 +56,18 @@ export class AuthController {
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
 
-            return this.responseHttp.CREATED(res, { 
+            return this.responseHttp.CREATED(res, {
                 user: {
                     id: newUser.user.id,
                     email: newUser.user.email,
                     nick: newUser.user.nick,
                     role: newUser.user.role
-                }, 
-                token: newUser.token });
+                },
+                token: newUser.token,
+                message: 'User registered successfully. Please verify your email.'
+            });
 
-
-        }catch (error) {
+        } catch (error) {
             console.error('Error in register:', error);
             return this.responseHttp.INTERNAL_SERVER_ERROR(res, 'Error registering user');
         }
@@ -73,12 +75,7 @@ export class AuthController {
 
     async login(req: Request, res: Response): Promise<Response> {
         try {
-
             const { email, password } = req.body;
-
-            if (!email || !password) {
-                return this.responseHttp.BAD_REQUEST(res, 'Email and password are required');
-            }
 
             const user = await this.userService.getUserByEmailWithPassword(email);
 
@@ -109,19 +106,72 @@ export class AuthController {
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
 
-            return this.responseHttp.OK(res, { 
+            return this.responseHttp.OK(res, {
                 user: {
                     id: user.id,
                     email: user.email,
                     nick: user.nick,
-                    role: user.role
-                }, 
-                token 
+                    role: user.role,
+                    emailVerified: user.emailVerified
+                },
+                token
             });
 
-        }catch (error) {    
+        } catch (error) {
             console.error('Error in login:', error);
             return this.responseHttp.INTERNAL_SERVER_ERROR(res, 'Error logging in');
+        }
+    }
+
+    async verifyEmail(req: Request, res: Response): Promise<Response> {
+        try {
+            const { email, token } = req.body;
+
+            const result = await this.userService.verifyEmail(email, token);
+
+            return this.responseHttp.OK(res, {
+                message: result.message,
+                emailVerified: true
+            });
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Verification failed';
+
+            if (message.includes('not found')) {
+                return this.responseHttp.BAD_REQUEST(res, message);
+            }
+            if (message.includes('already verified')) {
+                return this.responseHttp.BAD_REQUEST(res, message);
+            }
+            if (message.includes('Invalid') || message.includes('expired')) {
+                return this.responseHttp.BAD_REQUEST(res, message);
+            }
+
+            return this.responseHttp.INTERNAL_SERVER_ERROR(res, message);
+        }
+    }
+
+    async resendVerificationEmail(req: Request, res: Response): Promise<Response> {
+        try {
+            const { email } = req.body;
+
+            const result = await this.userService.resendVerificationEmail(email);
+
+            return this.responseHttp.OK(res, {
+                message: result.message
+            });
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to resend verification email';
+
+            if (message.includes('not found')) {
+                return this.responseHttp.BAD_REQUEST(res, message);
+            }
+            if (message.includes('already verified')) {
+                return this.responseHttp.BAD_REQUEST(res, message);
+            }
+
+            return this.responseHttp.INTERNAL_SERVER_ERROR(res, message);
         }
     }
 
@@ -191,7 +241,7 @@ export class AuthController {
         }
     }
 
-    async logout(req: Request, res: Response) {
+    async logout(req: Request, res: Response): Promise<Response> {
         try {
             const user = req.user;
 
@@ -212,8 +262,8 @@ export class AuthController {
             return this.responseHttp.INTERNAL_SERVER_ERROR(res, error.message);
         }
     }
-    
-    async getProfile(req: Request, res: Response) {
+
+    async getProfile(req: Request, res: Response): Promise<Response> {
         try {
             const user = req.user;
 
@@ -230,5 +280,4 @@ export class AuthController {
             return this.responseHttp.INTERNAL_SERVER_ERROR(res, error.message);
         }
     }
-
 }
