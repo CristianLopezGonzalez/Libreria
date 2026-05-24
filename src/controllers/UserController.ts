@@ -75,6 +75,12 @@ export class UserController {
         try {
 
             const { id } = req.params;
+            const userId = req.user?.id;
+
+            if (userId !== id) {
+                return this.responseHttp.FORBIDDEN(res, 'You are not authorized to delete this user');
+            }
+
             await this.userService.deleteUser(id);
             return this.responseHttp.OK(res, null, 'User deleted successfully');
 
