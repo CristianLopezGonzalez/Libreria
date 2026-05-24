@@ -34,7 +34,6 @@ export class UserController {
 
     async getAllUsers(req: Request, res: Response) {
         try {
-
             const users = await this.userService.getAllUsers();
             return this.responseHttp.OK(res, users, 'Users fetched successfully');
 
@@ -61,6 +60,12 @@ export class UserController {
         try {
 
             const { id } = req.params;
+            const userId = req.user?.id;
+
+            if (userId !== id) {
+                return this.responseHttp.FORBIDDEN(res, 'You are not authorized to update this user');
+            }
+
             const userData: UpdateUserDTO = req.body;
             const result = await this.userService.updateUser(userData, id);
             return this.responseHttp.OK(res, result, 'User updated successfully');
