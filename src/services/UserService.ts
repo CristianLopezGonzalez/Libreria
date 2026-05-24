@@ -2,7 +2,6 @@ import { prisma } from "../config/prisma";
 import { CreateUserDTO, CreateUserDTOResponse, UserDTO, UpdateUserDTO, UserWithPasswordDTO } from "../types/UserTypes";
 import { AuthUtils } from "../utils/AuthUtils";
 import crypto from 'crypto';
-import { EmailService } from "./EmailService";
 
 const USER_SELECT = {
     id: true,
@@ -15,7 +14,6 @@ export class UserService {
 
     constructor(
         private authUtils: AuthUtils = new AuthUtils(),
-        private emailService: EmailService = new EmailService()
     ) {
         this.getUserByNick = this.getUserByNick.bind(this);
         this.getUserByEmail = this.getUserByEmail.bind(this);
@@ -130,8 +128,6 @@ export class UserService {
             }
 
             const hashedPassword = await this.authUtils.hashPassword(data.password);
-            const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-            const emailVerificationTokenHash = this.authUtils.hashToken(emailVerificationToken);
 
 
             const user = await prisma.user.create({
@@ -151,17 +147,9 @@ export class UserService {
 
             const token = await this.authUtils.generateToken(payload);
 
-            try {
-                await this.emailService.sendVerificationEmail(user.email, emailVerificationToken, user.nick);
-            } catch (emailError) {
-                console.error("Error sending verification email:", emailError);
-
-            }
-
             return {
                 user,
                 token,
-                emailVerificationToken,
             }
 
         } catch (error) {
