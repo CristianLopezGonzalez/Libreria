@@ -46,7 +46,7 @@ export class BookController {
 
             const book = await this.bookService.getBookById(id, userId);
             if (!book) {
-                return this.responseHttp.OK(res)
+                return this.responseHttp.NOT_FOUND(res, 'Book not found');
             }
             return this.responseHttp.OK(res, book, 'Book fetched successfully');
 
@@ -104,22 +104,12 @@ export class BookController {
 
     async getAllBooks(req: Request<{}, {}, {}, { page?: string; pageSize?: string }>, res: Response) {
         try {
-            const page = parseInt(req.query.page || '1');
-            const pageSize = parseInt(req.query.pageSize || '10');
-
             const userId = req.user?.id;
             if (!userId) {
                 return this.responseHttp.UNAUTHORIZED(res, 'User not authenticated');
             }
- 
-            if (isNaN(page) || page < 1) {
-                return this.responseHttp.BAD_REQUEST(res, 'Page must be a positive integer');
-            }
- 
-            if (isNaN(pageSize) || pageSize < 1 || pageSize > 100) {
-                return this.responseHttp.BAD_REQUEST(res, 'Page size must be a positive integer between 1 and 100');
-            }
- 
+
+            const { page = 1, pageSize = 10 } = req.query as { page?: number; pageSize?: number };
             const books = await this.bookService.getAllBooks(userId, page, pageSize);
             return this.responseHttp.OK(res, books, 'Books fetched successfully');
  

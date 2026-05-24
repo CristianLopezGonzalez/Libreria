@@ -1,4 +1,5 @@
 import bcript from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import {config} from '../config/env';
 
@@ -11,6 +12,7 @@ export class AuthUtils {
         this.verifyToken = this.verifyToken.bind(this);
         this.generateRefreshToken = this.generateRefreshToken.bind(this);
         this.verifyRefreshToken = this.verifyRefreshToken.bind(this);
+        this.hashToken = this.hashToken.bind(this);
     }
 
     async hashPassword(password: string): Promise<string> {
@@ -40,5 +42,9 @@ export class AuthUtils {
     async verifyRefreshToken(token: string): Promise<any> {
         const secretKey = config.REFRESH_TOKEN_SECRET;
         return jwt.verify(token, secretKey);
+    }
+
+    hashToken(token: string): string {
+        return crypto.createHash('sha256').update(token).digest('hex');
     }
 }

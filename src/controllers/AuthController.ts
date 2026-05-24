@@ -173,6 +173,16 @@ export class AuthController {
             };
 
             const token = await this.authUtils.generateToken(payload);
+            const newRefreshToken = await this.authUtils.generateRefreshToken(payload);
+            await this.userService.createRefreshToken(user.id, newRefreshToken);
+            await this.userService.deleteRefreshToken(refreshToken);
+
+            res.cookie('refreshToken', newRefreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
 
             return this.responseHttp.OK(res, { token });
         } catch (error: any) {

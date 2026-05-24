@@ -137,7 +137,7 @@ export class UserService {
                 select: USER_SELECT
             })
 
-            const token = await this.authUtils.generateToken({ id: user.id, email: user.email, role: user.role });
+            const token = await this.authUtils.generateToken({ id: user.id, nick: user.nick, role: user.role });
 
             return {
                 user,
@@ -152,10 +152,11 @@ export class UserService {
 
     async createRefreshToken(userId: string, refreshToken: string): Promise<void> {
         try {
+            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
             await prisma.refreshToken.create({
                 data: {
                     userId,
-                    refreshToken,
+                    refreshToken: refreshTokenHash,
                     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 }
             });
@@ -167,8 +168,9 @@ export class UserService {
 
     async getRefreshToken(refreshToken: string): Promise<{ userId: string; expiresAt: Date; refreshToken: string } | null> {
         try {
+            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
             const token = await prisma.refreshToken.findUnique({
-                where: { refreshToken },
+                where: { refreshToken: refreshTokenHash },
                 select: {
                     userId: true,
                     expiresAt: true,
@@ -185,8 +187,9 @@ export class UserService {
 
     async deleteRefreshToken(refreshToken: string): Promise<void> {
         try {
+            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
             await prisma.refreshToken.deleteMany({
-                where: { refreshToken }
+                where: { refreshToken: refreshTokenHash }
             });
         } catch (error) {
             console.error("Error deleting refresh token:", error);
