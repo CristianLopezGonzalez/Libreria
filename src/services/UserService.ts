@@ -1,7 +1,6 @@
 import { prisma } from "../config/prisma";
 import { CreateUserDTO, CreateUserDTOResponse, UserDTO, UpdateUserDTO, UserWithPasswordDTO } from "../types/UserTypes";
 import { AuthUtils } from "../utils/AuthUtils";
-import crypto from 'crypto';
 
 const USER_SELECT = {
     id: true,
