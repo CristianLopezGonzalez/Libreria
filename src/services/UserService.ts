@@ -149,7 +149,7 @@ export class UserService {
                 select: USER_SELECT
             })
 
-            const payload={
+            const payload = {
                 id: user.id,
                 nick: user.nick,
                 role: user.role
@@ -179,7 +179,7 @@ export class UserService {
     async verifyEmail(email: string, token: string): Promise<{ message: string }> {
         try {
             const tokenHash = this.authUtils.hashToken(token);
- 
+
             const user = await prisma.user.findUnique({
                 where: { email },
                 select: {
@@ -189,27 +189,27 @@ export class UserService {
                     emailVerified: true
                 }
             });
- 
+
             if (!user) {
                 throw new Error("User not found");
             }
- 
+
             if (user.emailVerified) {
                 throw new Error("Email already verified");
             }
- 
+
             if (!user.emailVerificationTokenHash) {
                 throw new Error("No verification token found");
             }
- 
+
             if (user.emailVerificationTokenHash !== tokenHash) {
                 throw new Error("Invalid verification token");
             }
- 
+
             if (user.emailVerifyExpiresAt && new Date() > user.emailVerifyExpiresAt) {
                 throw new Error("Verification token has expired");
             }
- 
+
             // Actualizar el usuario
             await prisma.user.update({
                 where: { id: user.id },
@@ -219,11 +219,11 @@ export class UserService {
                     emailVerifyExpiresAt: null
                 }
             });
- 
+
             return {
                 message: "Email verified successfully"
             };
- 
+
         } catch (error) {
             console.error("Error verifying email:", error);
             throw new Error(error instanceof Error ? error.message : "Failed to verify email");
@@ -240,19 +240,19 @@ export class UserService {
                     emailVerified: true
                 }
             });
- 
+
             if (!user) {
                 throw new Error("User not found");
             }
- 
+
             if (user.emailVerified) {
                 throw new Error("Email is already verified");
             }
- 
+
             // Generar nuevo token
             const emailVerificationToken = crypto.randomBytes(32).toString('hex');
             const emailVerificationTokenHash = this.authUtils.hashToken(emailVerificationToken);
- 
+
             // Actualizar el token en la BD
             await prisma.user.update({
                 where: { id: user.id },
@@ -261,14 +261,14 @@ export class UserService {
                     emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
                 }
             });
- 
+
             // Enviar email
             await this.emailService.sendVerificationEmail(email, emailVerificationToken, user.nick);
- 
+
             return {
                 message: "Verification email sent successfully"
             };
- 
+
         } catch (error) {
             console.error("Error resending verification email:", error);
             throw new Error(error instanceof Error ? error.message : "Failed to resend verification email");
@@ -323,10 +323,15 @@ export class UserService {
     }
 
     async deleteUser(id: string) {
-        try {
-            await prisma.user.delete({
+        try {            
+            const user = await prisma.user.delete({
                 where: { id },
             });
+
+            if (!user) {
+                throw new Error("User not found");
+            }
+
         } catch (error) {
             console.error("Error deleting user:", error);
             throw new Error("Failed to delete user");
@@ -373,7 +378,7 @@ export class UserService {
         }
     }
 
-    
+
 
 
 }
