@@ -28,7 +28,6 @@ export class EmailService {
 
     async sendVerificationEmail(email: string, verificationToken: string, nick: string): Promise<void> {
         try {
-            // Construir URL de verificación (ajusta según tu dominio)
             const verificationUrl = `${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
             const html = `
@@ -71,7 +70,7 @@ export class EmailService {
                             <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
                         </div>
                         <div class="footer">
-                            <p>&copy; 2024 BookTracker. Todos los derechos reservados.</p>
+                            <p>&copy; 2026 BookTracker. Todos los derechos reservados.</p>
                         </div>
                     </div>
                 </body>
