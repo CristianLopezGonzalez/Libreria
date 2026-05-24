@@ -13,7 +13,7 @@ enum Role {
 }
 
 model User {
-  id       String @id @default(uuid())
+  id       String @id @default(uuid()) 
   nick     String @unique
   email    String @unique
   password String
@@ -34,16 +34,16 @@ model Book {
   isbn        String @unique
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id] , onDelete: Cascade)
 
   authorId String
-  author   Author @relation(fields: [authorId], references: [id])
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   editorialId String
-  editorial   Editorial @relation(fields: [editorialId], references: [id])
+  editorial   Editorial @relation(fields: [editorialId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -88,7 +88,7 @@ model RefreshToken {
   expiresAt    DateTime
   userId       String
 
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -10,6 +10,7 @@ import authorRoutes from './routes/AuthorRoutes';
 import categoryRoutes from './routes/CategoryRoutes';
 import editorialRoutes from './routes/EditorialRoutes';
 import bookRoutes from './routes/BookRoutes';
+import userRoutes from './routes/UserRoutes';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/authors', authorRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/editorials', editorialRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'Api online' });

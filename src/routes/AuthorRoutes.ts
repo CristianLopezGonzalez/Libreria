@@ -1,27 +1,16 @@
+import {AuthorController} from '../controllers/AuthorController';
 import { Router } from 'express';
-import { AuthController } from '../controllers/AuthController';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
+import { Role } from '../generated/prisma/enums';
 import { validateBody } from '../middlewares/ValidateSchema';
-import { 
-    registerSchema, 
-    loginSchema, 
-    verifyEmailSchema, 
-    resendVerificationEmailSchema 
-} from '../schemas/AuthSchemas';
+import { nameSchema } from '../schemas/CommonSchemas';
 
 const router = Router();
-const authC = new AuthController();
+const authorC = new AuthorController();
 const authM = new AuthMiddleware();
 
-// Public endpoints
-router.post('/register', validateBody(registerSchema), authC.register);
-router.post('/login', validateBody(loginSchema), authC.login);
-router.post('/verify-email', validateBody(verifyEmailSchema), authC.verifyEmail);
-router.post('/resend-verification-email', validateBody(resendVerificationEmailSchema), authC.resendVerificationEmail);
-
-// Protected endpoints
-router.post('/refresh-token', authC.refreshToken);
-router.post('/logout', authM.authenticate, authC.logout);
-router.get('/profile', authM.authenticate, authC.getProfile);
+router.get('/', authorC.getAllAuthors);
+router.get('/:id', authorC.getAuthorById);
+router.post('/', authM.authenticate, authM.permitRoles([Role.ADMIN]), validateBody(nameSchema), authorC.createAuthor);
 
 export default router;
