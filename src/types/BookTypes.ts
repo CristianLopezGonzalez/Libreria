@@ -2,8 +2,10 @@ export interface BookDTO {
     id: string;
     title: string;
     description: string;
+    isbn: string;
     user: {
         id: string;
+        nick: string;
     };
     author: {
         name: string;

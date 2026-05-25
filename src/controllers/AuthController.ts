@@ -62,7 +62,7 @@ export class AuthController {
                     role: newUser.user.role
                 },
                 token: newUser.token,
-                message: 'User registered successfully. Please verify your email.'
+                message: 'User registered successfully.'
             });
 
         } catch (error) {

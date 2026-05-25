@@ -19,9 +19,7 @@ export const registerSchema = z.object({
         .regex(/^[a-zA-Z0-9_-]+$/, 'Nick can only contain letters, numbers, underscores and hyphens')
 });
 
-/**
- * Schema para login
- */
+
 export const loginSchema = z.object({
     email: z
         .string({ required_error: 'Email is required' })
@@ -32,41 +30,13 @@ export const loginSchema = z.object({
         .min(1, 'Password is required')
 });
 
-/**
- * Schema para verificación de email
- */
-export const verifyEmailSchema = z.object({
-    email: z
-        .string({ required_error: 'Email is required' })
-        .email('Invalid email format')
-        .toLowerCase(),
-    token: z
-        .string({ required_error: 'Token is required' })
-        .min(64, 'Invalid token')
-});
 
-/**
- * Schema para reenviar email de verificación
- */
-export const resendVerificationEmailSchema = z.object({
-    email: z
-        .string({ required_error: 'Email is required' })
-        .email('Invalid email format')
-        .toLowerCase()
-});
-
-/**
- * Schema para refresh token
- */
 export const refreshTokenSchema = z.object({
     refreshToken: z
         .string({ required_error: 'Refresh token is required' })
         .optional()
 });
 
-// DTOs para typage
 export type RegisterDTO = z.infer<typeof registerSchema>;
 export type LoginDTO = z.infer<typeof loginSchema>;
-export type VerifyEmailDTO = z.infer<typeof verifyEmailSchema>;
-export type ResendVerificationEmailDTO = z.infer<typeof resendVerificationEmailSchema>;
 export type RefreshTokenDTO = z.infer<typeof refreshTokenSchema>;
