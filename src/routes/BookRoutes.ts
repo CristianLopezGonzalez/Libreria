@@ -1,10 +1,10 @@
 import {BookController} from '../controllers/BookController';
-import { Router } from 'express';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
 import { validateBody, validateParams, validateQuery } from '../middlewares/ValidateSchema';
 import { bookIdParamsSchema, bookListQuerySchema, createBookSchema, updateBookSchema } from '../schemas/BookSchemas';
+import express, { Router } from 'express';
 
-const router = Router();
+const router: Router = express.Router();
 const bookC = new BookController();
 const authM = new AuthMiddleware();
 

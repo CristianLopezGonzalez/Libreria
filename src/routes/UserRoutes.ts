@@ -1,9 +1,9 @@
-import express from 'express';
 import { UserController } from '../controllers/UserController';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
 import { Role } from '../generated/prisma/enums';
+import express, { Router } from 'express';
 
-const router = express.Router();
+const router: Router = express.Router();
 const userC = new UserController();
 const authM = new AuthMiddleware();
 

@@ -1,11 +1,11 @@
 import {CategoryController} from '../controllers/CategoryController';
-import { Router } from 'express';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
 import { Role } from '../generated/prisma/enums';
 import { validateBody } from '../middlewares/ValidateSchema';
 import { nameSchema } from '../schemas/CommonSchemas';
+import express, { Router } from 'express';
 
-const router = Router();
+const router: Router = express.Router();
 const categoryC = new CategoryController();
 const authM = new AuthMiddleware();
 

@@ -1,4 +1,3 @@
-import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
 import { validateBody } from '../middlewares/ValidateSchema';
@@ -6,8 +5,9 @@ import {
     registerSchema, 
     loginSchema, 
 } from '../schemas/AuthSchemas';
+import express, { Router } from 'express';
 
-const router = Router();
+const router: Router = express.Router();
 const authC = new AuthController();
 const authM = new AuthMiddleware();
 
