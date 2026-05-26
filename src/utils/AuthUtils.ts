@@ -44,7 +44,7 @@ export class AuthUtils {
         return jwt.verify(token, secretKey);
     }
 
-    hashToken(token: string): string {
+    async hashToken(token: string): Promise<string> {
         return crypto.createHash('sha256').update(token).digest('hex');
     }
 }

@@ -160,7 +160,7 @@ export class UserService {
 
     async createRefreshToken(userId: string, refreshToken: string): Promise<void> {
         try {
-            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
+            const refreshTokenHash = await this.authUtils.hashToken(refreshToken);
             await prisma.refreshToken.create({
                 data: {
                     userId,
@@ -176,7 +176,7 @@ export class UserService {
 
     async getRefreshToken(refreshToken: string): Promise<{ userId: string; expiresAt: Date; refreshToken: string } | null> {
         try {
-            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
+            const refreshTokenHash = await this.authUtils.hashToken(refreshToken);
             const token = await prisma.refreshToken.findUnique({
                 where: { refreshToken: refreshTokenHash },
                 select: {
@@ -195,7 +195,7 @@ export class UserService {
 
     async deleteRefreshToken(refreshToken: string): Promise<void> {
         try {
-            const refreshTokenHash = this.authUtils.hashToken(refreshToken);
+            const refreshTokenHash = await this.authUtils.hashToken(refreshToken);
             await prisma.refreshToken.deleteMany({
                 where: { refreshToken: refreshTokenHash }
             });
